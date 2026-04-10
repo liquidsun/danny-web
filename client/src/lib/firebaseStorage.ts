@@ -37,17 +37,38 @@ export function saveSlots(slots: SlotRecord[]): void {
   }, 300);
 }
 
+// Sanitize caregiver data from Firebase (arrays may be lost as undefined)
+function sanitizeCaregiver(cg: Caregiver): Caregiver {
+  return {
+    ...cg,
+    availabilityWindows: Array.isArray(cg.availabilityWindows)
+      ? cg.availabilityWindows.map(w => ({
+          ...w,
+          days: Array.isArray(w.days) ? w.days : [],
+        }))
+      : [],
+    overrides: Array.isArray(cg.overrides) ? cg.overrides : [],
+  };
+}
+
+// Sanitize slot data from Firebase
+function sanitizeSlot(slot: SlotRecord): SlotRecord {
+  return {
+    ...slot,
+    assignments: Array.isArray(slot.assignments) ? slot.assignments : [],
+  };
+}
+
 // Subscribe to caregivers changes
 export function subscribeCaregivers(callback: (caregivers: Caregiver[]) => void): Unsubscribe {
   const caregiversRef = ref(db, CAREGIVERS_PATH);
   return onValue(caregiversRef, (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      const caregivers = Object.values(data) as Caregiver[];
+      const caregivers = (Object.values(data) as Caregiver[]).map(sanitizeCaregiver);
       callback(caregivers);
-    } else {
-      callback([]);
     }
+    // If null (empty DB), don't call back — keep defaults
   });
 }
 
@@ -57,10 +78,9 @@ export function subscribeSlots(callback: (slots: SlotRecord[]) => void): Unsubsc
   return onValue(slotsRef, (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      const slots = Object.values(data) as SlotRecord[];
+      const slots = (Object.values(data) as SlotRecord[]).map(sanitizeSlot);
       callback(slots);
-    } else {
-      callback([]);
     }
+    // If null (empty DB), don't call back — keep defaults
   });
 }

@@ -107,19 +107,22 @@ const DispatchContext = createContext<Dispatch<AppAction> | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, null, getInitialState);
   const isRemoteUpdate = useRef(false);
-  const prevCaregiversRef = useRef<string>('');
-  const prevSlotsRef = useRef<string>('');
+  const hasSyncedFromFirebase = useRef(false);
+  const prevCaregiversRef = useRef<string>(JSON.stringify(state.caregivers));
+  const prevSlotsRef = useRef<string>(JSON.stringify(state.slots));
 
   // Subscribe to Firebase real-time updates
   useEffect(() => {
     const unsubCaregivers = subscribeCaregivers((caregivers) => {
       if (caregivers.length > 0) {
         isRemoteUpdate.current = true;
+        hasSyncedFromFirebase.current = true;
         dispatch({ type: 'SYNC_CAREGIVERS', caregivers });
       }
     });
     const unsubSlots = subscribeSlots((slots) => {
       isRemoteUpdate.current = true;
+      hasSyncedFromFirebase.current = true;
       dispatch({ type: 'SYNC_SLOTS', slots });
     });
     return () => {
@@ -136,6 +139,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prevSlotsRef.current = JSON.stringify(state.slots);
       return;
     }
+    // Don't save until we've received at least one sync from Firebase
+    if (!hasSyncedFromFirebase.current) return;
     const cgJson = JSON.stringify(state.caregivers);
     const slotJson = JSON.stringify(state.slots);
     if (cgJson !== prevCaregiversRef.current) {
