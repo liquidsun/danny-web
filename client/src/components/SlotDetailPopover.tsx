@@ -2,15 +2,16 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAppState, useAppDispatch } from '../contexts/AppContext';
 import { minutesToTime } from '../lib/storage';
 import type { DisplayBlock } from '../lib/types';
-import { X, Check, Trash2, AlertTriangle, UserPlus } from 'lucide-react';
+import { X, Check, Trash2, AlertTriangle, UserPlus, Pencil } from 'lucide-react';
 
 interface Props {
   block: DisplayBlock;
   position: { top: number; left: number };
   onClose: () => void;
+  onEdit: (block: DisplayBlock) => void;
 }
 
-export function SlotDetailPopover({ block, position, onClose }: Props) {
+export function SlotDetailPopover({ block, position, onClose, onEdit }: Props) {
   const state = useAppState();
   const dispatch = useAppDispatch();
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -148,6 +149,14 @@ export function SlotDetailPopover({ block, position, onClose }: Props) {
               )}
             </div>
           )}
+
+          {/* Edit block */}
+          <button
+            onClick={() => { onEdit(block); onClose(); }}
+            className="w-full flex items-center justify-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 py-2 rounded-lg transition-colors"
+          >
+            <Pencil size={12} /> Edit this assignment
+          </button>
 
           {/* Delete block */}
           <button

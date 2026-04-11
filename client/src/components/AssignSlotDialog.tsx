@@ -1,23 +1,28 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useAppDispatch, useAppState } from '../contexts/AppContext';
 import { minutesToTime, timeToMinutes, roundToSlot, isCaregiverAvailableForRange, generateSlotId } from '../lib/storage';
-import type { SlotRecord } from '../lib/types';
+import type { SlotRecord, DisplayBlock } from '../lib/types';
 import { X, AlertTriangle, Check } from 'lucide-react';
 
 interface Props {
   date: string;
   initialStartMinutes: number;
   onClose: () => void;
+  editBlock?: DisplayBlock;
 }
 
-export function AssignSlotDialog({ date, initialStartMinutes, onClose }: Props) {
+export function AssignSlotDialog({ date, initialStartMinutes, onClose, editBlock }: Props) {
   const state = useAppState();
   const dispatch = useAppDispatch();
 
-  const roundedStart = roundToSlot(initialStartMinutes);
+  const roundedStart = editBlock ? editBlock.startMinutes : roundToSlot(initialStartMinutes);
+  const defaultEnd = editBlock ? editBlock.endMinutes : Math.min(roundToSlot(initialStartMinutes) + 120, 1440);
   const [startTime, setStartTime] = useState(minutesToTime(roundedStart));
-  const [endTime, setEndTime] = useState(minutesToTime(Math.min(roundedStart + 120, 1440)));
-  const [selectedCgId, setSelectedCgId] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState(minutesToTime(defaultEnd));
+  const defaultCgId = editBlock
+    ? (editBlock.assignments.find(a => a.status === 'confirmed')?.caregiverId ?? editBlock.assignments[0]?.caregiverId ?? null)
+    : null;
+  const [selectedCgId, setSelectedCgId] = useState<string | null>(defaultCgId);
 
   const startMin = useMemo(() => timeToMinutes(startTime), [startTime]);
   const endMin = useMemo(() => timeToMinutes(endTime), [endTime]);
@@ -32,6 +37,11 @@ export function AssignSlotDialog({ date, initialStartMinutes, onClose }: Props) 
   const handleAssign = useCallback(() => {
     if (!selectedCgId || endMin <= startMin) return;
 
+    // If editing, remove old slots first
+    if (editBlock) {
+      dispatch({ type: 'DELETE_BLOCK', slotIds: editBlock.slotIds });
+    }
+
     const slots: SlotRecord[] = [];
     for (let t = startMin; t < endMin; t += 30) {
       slots.push({
@@ -44,7 +54,7 @@ export function AssignSlotDialog({ date, initialStartMinutes, onClose }: Props) 
     }
     dispatch({ type: 'ASSIGN_SLOTS', slots });
     onClose();
-  }, [selectedCgId, startMin, endMin, date, dispatch, onClose]);
+  }, [selectedCgId, startMin, endMin, date, dispatch, onClose, editBlock]);
 
   const dayLabel = new Date(date + 'T00:00:00').toLocaleDateString('en', {
     weekday: 'long',
@@ -58,7 +68,7 @@ export function AssignSlotDialog({ date, initialStartMinutes, onClose }: Props) 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Assign Caregiver</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{editBlock ? 'Edit Assignment' : 'Assign Caregiver'}</h3>
             <p className="text-sm text-slate-500 mt-0.5">{dayLabel}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
@@ -138,7 +148,7 @@ export function AssignSlotDialog({ date, initialStartMinutes, onClose }: Props) 
             disabled={!selectedCgId || endMin <= startMin}
             className="w-full py-2.5 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 rounded-xl transition-colors"
           >
-            Assign
+            {editBlock ? 'Save Changes' : 'Assign'}
           </button>
         </div>
       </div>

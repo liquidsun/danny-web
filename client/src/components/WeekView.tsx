@@ -146,14 +146,14 @@ export const WeekView = memo(function WeekView({ onSlotClick, onBlockClick }: Pr
                   return (
                     <div
                       key={bi}
-                      className="absolute left-0.5 right-0.5 rounded-[0.4rem] overflow-hidden cursor-pointer z-10 group transition-shadow hover:shadow-md"
+                      className="absolute left-0 right-0 overflow-hidden cursor-pointer z-10 group transition-shadow hover:shadow-md"
                       style={{
-                        top: top + 1,
-                        height: height - 2,
-                        backgroundColor: block.isPending ? 'transparent' : (cg?.color ?? '#94a3b8') + '20',
+                        top,
+                        height,
+                        backgroundColor: block.isPending ? undefined : (cg?.color ?? '#94a3b8') + '30',
                         borderLeft: `3px solid ${cg?.color ?? '#94a3b8'}`,
                         background: block.isPending
-                          ? `repeating-linear-gradient(45deg, ${cg?.color ?? '#94a3b8'}15, ${cg?.color ?? '#94a3b8'}15 4px, ${cg?.color ?? '#94a3b8'}08 4px, ${cg?.color ?? '#94a3b8'}08 8px)`
+                          ? `repeating-linear-gradient(45deg, ${cg?.color ?? '#94a3b8'}25, ${cg?.color ?? '#94a3b8'}25 4px, ${cg?.color ?? '#94a3b8'}10 4px, ${cg?.color ?? '#94a3b8'}10 8px)`
                           : undefined,
                       }}
                       onClick={(e) => {
@@ -162,13 +162,13 @@ export const WeekView = memo(function WeekView({ onSlotClick, onBlockClick }: Pr
                         onBlockClick(block, rect);
                       }}
                     >
-                      <div className="px-1.5 py-0.5 h-full flex flex-col justify-start">
-                        <span className="text-[11px] font-semibold truncate" style={{ color: cg?.color ?? '#475569' }}>
+                      <div className="px-2 py-1 h-full flex flex-col justify-start">
+                        <span className="text-xs font-bold truncate" style={{ color: cg?.color ?? '#475569' }}>
                           {cg?.initials ?? '?'}
                           {block.assignments.length > 1 && ` +${block.assignments.length - 1}`}
                         </span>
-                        {height > 28 && (
-                          <span className="text-[9px] font-mono text-slate-500 truncate">{timeLabel}</span>
+                        {height > 30 && (
+                          <span className="text-[10px] font-mono truncate" style={{ color: (cg?.color ?? '#475569') }}>{timeLabel}</span>
                         )}
                       </div>
                     </div>

@@ -28,6 +28,7 @@ export default function Home() {
   const [editingCaregiver, setEditingCaregiver] = useState<Caregiver | null | 'new'>(null);
   const [assignSlot, setAssignSlot] = useState<{ date: string; startMinutes: number } | null>(null);
   const [blockDetail, setBlockDetail] = useState<{ block: DisplayBlock; position: { top: number; left: number } } | null>(null);
+  const [editBlock, setEditBlock] = useState<DisplayBlock | null>(null);
   const [showExport, setShowExport] = useState(false);
 
   const currentDate = useMemo(() => parseDate(state.currentDate), [state.currentDate]);
@@ -179,6 +180,15 @@ export default function Home() {
             block={blockDetail.block}
             position={blockDetail.position}
             onClose={() => setBlockDetail(null)}
+            onEdit={(block) => setEditBlock(block)}
+          />
+        )}
+        {editBlock && (
+          <AssignSlotDialog
+            date={editBlock.date}
+            initialStartMinutes={editBlock.startMinutes}
+            editBlock={editBlock}
+            onClose={() => setEditBlock(null)}
           />
         )}
         {showExport && <ExportDialog onClose={() => setShowExport(false)} />}
